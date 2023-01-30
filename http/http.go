@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	httpurl "net/url"
 )
 
 type Json map[string]any
@@ -24,10 +25,13 @@ func NewHttpClient() *Client {
 	}
 }
 
-func (h Client) PostJson(url string, v any, data map[string]any) (any, error) {
+func (h Client) Post(url string, v any, data map[string]any) (any, error) {
 	params := h.Reader(data)
 	req, err := h.Client.Post(url, "application/json", params)
 	if err != nil {
+		return nil, err
+	}
+	if req.StatusCode != 200 {
 		return nil, err
 	}
 	resultContent, err := io.ReadAll(req.Body)
@@ -36,6 +40,31 @@ func (h Client) PostJson(url string, v any, data map[string]any) (any, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (h Client) Get(url string, v any, data map[string]string) (any, error) {
+	params := httpurl.Values{}        //参数集合
+	reqUrl, err := httpurl.Parse(url) //请求地址
+	if err != nil {
+		return nil, err
+	}
+	for key, val := range data {
+		params.Set(key, val)
+	}
+	reqUrl.RawQuery = params.Encode()      //组合url
+	resp, err := http.Get(reqUrl.String()) //发起get请求
+	if err != nil {
+		return nil, err
+	}
+	body, err := io.ReadAll(resp.Body) //解析请求信息
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(body, v) //转换为map
+	if err != nil {
+		return nil, err
+	}
+	return v, err
 }
 
 func (h Client) Reader(data map[string]any) io.Reader {
