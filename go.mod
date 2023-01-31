@@ -1,3 +1,3 @@
-module github.com/xiaowei/go-tool
+module github.com/weizhuxuanzx/go-tool
 
 go 1.19
