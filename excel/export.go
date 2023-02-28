@@ -13,6 +13,7 @@ type ExportServer struct {
 	Header       Header //表头
 	Data         []Data //数据内容
 	excel        *excelize.File
+	StreamServer StreamServer
 	LineTitle    []Line
 }
 type Header struct {
@@ -26,18 +27,20 @@ type Data map[string]string
 
 type Line struct {
 	Title    string
+	Key      string
 	SubTitle []Line
 }
 
 func NewExport(export ExportServer) *ExportServer {
 	service := excelize.NewFile()
 	return &ExportServer{
-		Path:      export.Path,
-		Header:    export.Header,
-		Data:      export.Data,
-		excel:     service,
-		SheetName: export.SheetName,
-		LineTitle: export.LineTitle,
+		Path:         export.Path,
+		Header:       export.Header,
+		Data:         export.Data,
+		excel:        service,
+		SheetName:    export.SheetName,
+		LineTitle:    export.LineTitle,
+		StreamServer: export.StreamServer,
 	}
 }
 
@@ -66,12 +69,27 @@ func (e ExportServer) SaveFile() {
 	}
 }
 func (e ExportServer) SetValue(index int) {
+	dataKey := e.SetDataKey()
 	for k, value := range e.Data {
-		err := e.excel.SetCellValue(e.SheetName, e.decimalToColumn(k+1)+strconv.Itoa(k+index), value)
-		if err != nil {
-			return
+		for key, _ := range dataKey {
+			err := e.excel.SetCellValue(e.SheetName, e.decimalToColumn(k+1)+strconv.Itoa(k+index), value[key])
+			if err != nil {
+				return
+			}
 		}
 	}
+}
+
+func (e ExportServer) SetDataKey() map[string]string {
+	DataKey := make(map[string]string)
+	for _, line := range e.LineTitle {
+		if len(line.SubTitle) != 0 {
+			for _, subValue := range line.SubTitle {
+				DataKey[subValue.Key] = ""
+			}
+		}
+	}
+	return DataKey
 }
 func (e ExportServer) SetLineTitle(index int) int {
 	//合并单元格记录器
