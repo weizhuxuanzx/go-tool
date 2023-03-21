@@ -1,0 +1,27 @@
+syntax = "proto3";
+package order;
+
+// 指定golang包名
+option go_package = "./order";
+
+// 定义Order服务
+service Order {
+  // 定义GetOrder方法
+  rpc GetOrder(OrderRequest) returns (OrderResponse) {
+  }
+}
+
+// OrderRequest 请求结构
+message OrderRequest {
+  string originId = 1;
+}
+
+// OrderResponse 响应结构
+message OrderResponse {
+  uint32 id = 2;
+  string originId = 1;
+  double price = 3;
+  string country = 4;
+  uint32 zpid = 5;
+  uint32 partnerId = 6;
+}
